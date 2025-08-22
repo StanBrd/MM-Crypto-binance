@@ -46,6 +46,33 @@ This project connects to **Binance WebSocket streams** and provides a **terminal
 ## 📦 Installation
 
 ### 1. Clone the repository
-```bash
+''bash
 git clone https://github.com/your-username/binance-market-maker-dashboard.git
 cd binance-market-maker-dashboard
+
+### 2. Install dependencies
+
+``bash
+pip install -r requirements.txt
+
+### 3. ▶️ Usage
+
+``bash
+python app.py
+
+Adjust your console window size
+
+The dashboard uses Rich layouts and works best in a wide terminal window.
+Make sure you maximize or resize your command prompt / terminal so that all panels are visible.
+
+Stop the program with Ctrl + C
+
+When you stop the dashboard, it will automatically export CSV files:
+	•	trades.csv → executed trades
+	•	pnl.csv → current P&L snapshot
+	•	pnl_history.csv → historical P&L
+	•	spreads.csv → spread analytics
+
+ Analyze results
+
+ python analyze.py
