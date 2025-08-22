@@ -17,10 +17,13 @@ class SpreadAnalyzer:
             5.0: deque(maxlen=window_size),
             10.0: deque(maxlen=window_size)
         }
-        self.imbalance_history = {
-            "L1":  deque(maxlen=window_size),
-            "L5":  deque(maxlen=window_size),
-            "VOL1": deque(maxlen=window_size),
+
+        self.timestamps_full = deque()
+        self.spread_history_full = {
+            0.1: deque(),
+            1.0: deque(),
+            5.0: deque(),
+            10.0: deque(),
         }
 
 
@@ -107,9 +110,11 @@ class SpreadAnalyzer:
     
     def update_spreads(self, bids: List[OrderBookLevel], asks: List[OrderBookLevel]):
         self.timestamps.append(time.time())
+        self.timestamps_full.append(time.time())
         for size in self.spread_history.keys():
             spread = self.calculate_spread_for_size(bids, asks, size)
             self.spread_history[size].append(spread)
+            self.spread_history_full[size].append(spread)
     
     def get_spread_metrics(self, size: float) -> SpreadMetrics:
         spreads = list(self.spread_history[size])
@@ -123,13 +128,27 @@ class SpreadAnalyzer:
             max_spread=max(spreads)
         )
     
-    def export_spreads_csv(self, filepath: str) -> None:
-        sizes = sorted(self.spread_history.keys())
-        n = min(len(self.timestamps), *(len(self.spread_history[s]) for s in sizes))
+    def export_spreads_csv(self, filepath: str, use_full: bool = False):
+        """Exporte soit la fenêtre roulante, soit l'historique complet."""
+        if use_full:
+            timestamps = list(self.timestamps_full)
+            src = self.spread_history_full
+    
+        else:
+            timestamps = list(self.timestamps)
+            src = self.spread_history
+
+        sizes = sorted(src.keys(), key=float)
+        rows = []
+        for i, ts in enumerate(timestamps):
+            row = {"timestamp": ts}
+            for size in sizes:
+                # sécurise l'index si tailles de listes différentes
+                row[str(size)] = src[size][i] if i < len(src[size]) else None
+            rows.append(row)
+
+        import csv
         with open(filepath, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["timestamp_iso"] + [f"spread_{s}btc" for s in sizes])
-            for i in range(n):
-                ts_iso = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.timestamps[i]))
-                row = [ts_iso] + [self.spread_history[s][i] for s in sizes]
-                w.writerow(row)
+            writer = csv.DictWriter(f, fieldnames=["timestamp"] + [str(s) for s in sizes])
+            writer.writeheader()
+            writer.writerows(rows)

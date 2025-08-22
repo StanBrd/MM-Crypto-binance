@@ -513,4 +513,4 @@ class TradingDashboard:
                 self.ws_client.stop()            
                 self.portfolio.export_trades_csv("trades.csv")
                 self.portfolio.export_pnl_csv("pnl.csv")
-                self.spread_analyzer.export_spreads_csv("spreads.csv")
+                self.spread_analyzer.export_spreads_csv("spreads.csv", use_full=True)
